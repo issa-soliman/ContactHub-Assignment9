@@ -98,7 +98,7 @@ var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2
 
 function validate(input, regex) {
   var value = input.value.trim();
-  var message = input.nextElementSibling; 
+  var message = input.nextElementSibling;   // the <p class="not-valid-text"> under the input
   var isValid = value === "" || regex.test(value);
 
   if (isValid) {
@@ -184,7 +184,7 @@ function createCard(contact, index) {
 
 // ===== Show all contacts =====
 function displayContacts() {
-  var term = searchInput.value.trim().toLowerCase();  
+  var term = searchInput.value.trim().toLowerCase();   
   var cards = "";
   var shown = 0;
 
@@ -211,6 +211,7 @@ function displayContacts() {
 
   displayPanel("#favorites-section-mobile", "favorite");
   displayPanel("#emergency-contacts-mobile", "emergency");
+  updateCounters();
 }
 
 // ===== Add a contact =====
@@ -334,7 +335,7 @@ function saveContacts() {
 }
 
 function toggleFavorite(index) {
-  contacts[index].favorite = !contacts[index].favorite; 
+  contacts[index].favorite = !contacts[index].favorite;   
   saveContacts();
   displayContacts();
 }
@@ -419,11 +420,12 @@ function updateContact() {
   };
 
   contact.color = contacts[updatedIndex].color;  
-  contacts[updatedIndex] = contact;   
+  contacts[updatedIndex] = contact;  
   saveContacts();
   displayContacts();
 }
 
+// ===== Search =====
 function matchesSearch(contact, term) {
   if (term === "") return true;  
   return contact.Name.toLowerCase().includes(term) ||
@@ -432,3 +434,17 @@ function matchesSearch(contact, term) {
 }
 
 searchInput.addEventListener("input", displayContacts);
+
+function updateCounters() {
+  var favCount = 0;
+  var emCount = 0;
+  for (var i = 0; i < contacts.length; i++) {
+    if (contacts[i].favorite) favCount++;
+    if (contacts[i].emergency) emCount++;
+  }
+
+  document.querySelector(".totalNum").textContent = contacts.length;
+  document.querySelector(".favoritesNum").textContent = favCount;
+  document.querySelector(".emergencyNum").textContent = emCount;
+  document.querySelector(".contacts-num").textContent = contacts.length;   // "Manage and organize your N contacts"
+}
