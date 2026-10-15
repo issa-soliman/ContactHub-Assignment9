@@ -19,6 +19,7 @@ var groupSelect = document.getElementById("group");
 var modalTitle = document.querySelector(".add-new-contact .top-header h2");
 var submitText = document.querySelector("#submitBtn .btn-text");
 var updatedIndex;  
+
 var contacts = JSON.parse(localStorage.getItem("contacts")) || [];
 displayContacts();
 
@@ -30,7 +31,7 @@ function closeModal() {
   modal.classList.remove("show");
   contactForm.reset();
   resetAvatar();
-  updatedIndex = undefined;           
+  updatedIndex = undefined;
   modalTitle.textContent = "Add New Contact";
   submitText.textContent = "Save Contact";
 }
@@ -50,15 +51,43 @@ document.addEventListener("keydown", function (e) {
 // ===== Change Photo preview =====
 var avatarIcon = avatarPreview.innerHTML;
 
+var avatarData = "";  
 avatarInput.addEventListener("change", function () {
   var file = avatarInput.files[0];
   if (!file) return;
-  avatarPreview.innerHTML =
-    '<img src="' + URL.createObjectURL(file) + '" alt="" class="w-100 h-100 rounded-circle" style="object-fit: cover;">';
+
+  var reader = new FileReader();
+  reader.onload = function () {
+    // make the photo small (200x200) so localStorage doesn't get full
+    var img = new Image();
+    img.onload = function () {
+      var canvas = document.createElement("canvas");
+      canvas.width = 200;
+      canvas.height = 200;
+      var ctx = canvas.getContext("2d");
+
+      var size = Math.min(img.width, img.height);
+      var x = (img.width - size) / 2;
+      var y = (img.height - size) / 2;
+      ctx.drawImage(img, x, y, size, size, 0, 0, 200, 200);
+
+      avatarData = canvas.toDataURL("image/jpeg", 0.8);
+      showAvatar(avatarData);
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
 });
+
+function showAvatar(src) {
+  avatarPreview.innerHTML =
+    '<img src="' + src + '" alt="" class="w-100 h-100 rounded-circle" style="object-fit: cover;">';
+}
 
 function resetAvatar() {
   avatarPreview.innerHTML = avatarIcon;
+  avatarData = "";
+  avatarInput.value = "";   
 }
 
 // ===== Build one card =====
@@ -68,7 +97,7 @@ function createCard(contact, index) {
 <div class="d-flex container-top flex-column">
   <div class="d-flex align-items-center gap-2">
     <div class="profilePic d-flex align-items-center justify-content-center orange-bg position-relative">
-      <span>${contact.Name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join("").toUpperCase()}</span>
+      ${contact.photo ? `<img src="${contact.photo}" alt="" class="w-100 h-100" style="object-fit: cover; border-radius: inherit;">` : `<span>${contact.Name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join("").toUpperCase()}</span>`}
           <div class="position-absolute favorites-p-a align-items-center justify-content-center ${contact.favorite ? "d-flex" : "d-none"}"><svg class="svg-inline--fa fa-star" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="star" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512" data-fa-i2svg=""><path fill="currentColor" d="M316.9 18C311.6 7 300.4 0 288.1 0s-23.4 7-28.8 18L195 150.3 51.4 171.5c-12 1.8-22 10.2-25.7 21.7s-.7 24.2 7.9 32.7L137.8 329 113.2 474.7c-2 12 3 24.2 12.9 31.3s23 8 33.8 2.3l128.3-68.5 128.3 68.5c10.8 5.7 23.9 4.9 33.8-2.3s14.9-19.3 12.9-31.3L438.5 329 542.7 225.9c8.6-8.5 11.7-21.2 7.9-32.7s-13.7-19.9-25.7-21.7L381.2 150.3 316.9 18z"></path></svg></div>
     <div class="position-absolute emergency-p-a align-items-center justify-content-center ${contact.emergency ? "d-flex" : "d-none"}"><svg class="svg-inline--fa fa-heart-pulse" aria-hidden="true" focusable="false" data-prefix="fas" data-icon="heart-pulse" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" data-fa-i2svg=""><path fill="currentColor" d="M228.3 469.1L47.6 300.4c-4.2-3.9-8.2-8.1-11.9-12.4h87c22.6 0 43-13.6 51.7-34.5l10.5-25.2 49.3 109.5c3.8 8.5 12.1 14 21.4 14.1s17.8-5 22-13.3L320 253.7l1.7 3.4c9.5 19 28.9 31 50.1 31H476.3c-3.7 4.3-7.7 8.5-11.9 12.4L283.7 469.1c-7.5 7-17.4 10.9-27.7 10.9s-20.2-3.9-27.7-10.9zM503.7 240h-132c-3 0-5.8-1.7-7.2-4.4l-23.2-46.3c-4.1-8.1-12.4-13.3-21.5-13.3s-17.4 5.1-21.5 13.3l-41.4 82.8L205.9 158.2c-3.9-8.7-12.7-14.3-22.2-14.1s-18.1 5.9-21.8 14.8l-31.8 76.3c-1.2 3-4.2 4.9-7.4 4.9H16c-2.6 0-5 .4-7.3 1.1C3 225.2 0 208.2 0 190.9v-5.8c0-69.9 50.5-129.5 119.4-141C165 36.5 211.4 51.4 244 84l12 12 12-12c32.6-32.6 79-47.5 124.6-39.9C461.5 55.6 512 115.2 512 185.1v5.8c0 16.9-2.8 33.5-8.3 49.1z"></path></svg></div>
 
@@ -154,6 +183,7 @@ function addContact() {
     email: email.value,
     address: address.value,
     group: groupSelect.value,
+    photo: avatarData,
     favorite: favoriteCheck.checked,
     emergency: emergencyCheck.checked
   };
@@ -267,7 +297,7 @@ function createMiniContact(contact) {
   return `
       <div class="mini-contact d-flex align-items-center justify-content-between">
         <div class="d-flex align-items-center gap-2">
-          <div class="mini-avatar d-flex align-items-center justify-content-center">${contact.Name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join("").toUpperCase()}</div>
+          <div class="mini-avatar d-flex align-items-center justify-content-center overflow-hidden">${contact.photo ? `<img src="${contact.photo}" alt="" class="w-100 h-100" style="object-fit: cover;">` : `${contact.Name.trim().split(/\s+/).slice(0, 2).map(w => w.charAt(0)).join("").toUpperCase()}`}</div>
           <div>
             <h4 class="mini-name">${contact.Name}</h4>
             <span class="mini-phone">${contact.phonenum}</span>
@@ -314,6 +344,10 @@ function editContact(index) {
   favoriteCheck.checked = contact.favorite || false;
   emergencyCheck.checked = contact.emergency || false;
   groupSelect.value = contact.group || "";
+  if (contact.photo) {
+    avatarData = contact.photo;
+    showAvatar(contact.photo);
+  }
 
   modalTitle.textContent = "Edit Contact";
   submitText.textContent = "Update Contact";
@@ -327,6 +361,7 @@ function updateContact() {
     email: email.value,
     address: address.value,
     group: groupSelect.value,
+    photo: avatarData,
     favorite: favoriteCheck.checked,
     emergency: emergencyCheck.checked
   };
