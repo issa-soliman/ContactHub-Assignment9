@@ -15,11 +15,11 @@ var noContacts = document.querySelector(".No-contacts-found");
 var favoriteCheck = document.getElementById("favorite");
 var emergencyCheck = document.getElementById("emergency");
 var groupSelect = document.getElementById("group");
+var searchInput = document.querySelector(".Search-Bar input");
 
 var modalTitle = document.querySelector(".add-new-contact .top-header h2");
 var submitText = document.querySelector("#submitBtn .btn-text");
-var updatedIndex;  
-
+var updatedIndex; 
 var contacts = JSON.parse(localStorage.getItem("contacts")) || [];
 displayContacts();
 
@@ -32,7 +32,7 @@ function closeModal() {
   contactForm.reset();
   resetAvatar();
   clearValidation();
-  updatedIndex = undefined;        
+  updatedIndex = undefined;     
   modalTitle.textContent = "Add New Contact";
   submitText.textContent = "Save Contact";
 }
@@ -52,7 +52,8 @@ document.addEventListener("keydown", function (e) {
 // ===== Change Photo preview =====
 var avatarIcon = avatarPreview.innerHTML;
 
-var avatarData = "";  
+var avatarData = "";   
+
 avatarInput.addEventListener("change", function () {
   var file = avatarInput.files[0];
   if (!file) return;
@@ -87,7 +88,7 @@ function showAvatar(src) {
 function resetAvatar() {
   avatarPreview.innerHTML = avatarIcon;
   avatarData = "";
-  avatarInput.value = "";   // so choosing the same photo again still works
+  avatarInput.value = "";  
 }
 
 // ===== Validation (regex) =====
@@ -95,11 +96,9 @@ var nameRegex  = /^[A-Za-z\u0600-\u06FF\s]{2,50}$/;
 var phoneRegex = /^01[0125]\d{8}$/;
 var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
 
-// checks one input and shows/hides the message under it
-// empty = valid (the "Missing" alerts handle empty name/phone)
 function validate(input, regex) {
   var value = input.value.trim();
-  var message = input.nextElementSibling;   // the <p class="not-valid-text"> under the input
+  var message = input.nextElementSibling; 
   var isValid = value === "" || regex.test(value);
 
   if (isValid) {
@@ -185,9 +184,15 @@ function createCard(contact, index) {
 
 // ===== Show all contacts =====
 function displayContacts() {
+  var term = searchInput.value.trim().toLowerCase();  
   var cards = "";
+  var shown = 0;
+
   for (var i = 0; i < contacts.length; i++) {
-    cards += createCard(contacts[i], i);
+    if (matchesSearch(contacts[i], term)) {
+      cards += createCard(contacts[i], i);  
+      shown++;
+    }
   }
 
   var oldCards = contactsGrid.querySelectorAll(".contacts");
@@ -196,7 +201,7 @@ function displayContacts() {
   }
   contactsGrid.insertAdjacentHTML("afterbegin", cards);
 
-  if (contacts.length > 0) {
+  if (shown > 0) {
     noContacts.classList.replace("d-flex", "d-none");
     contactsGrid.classList.add("d-grid");
   } else {
@@ -413,8 +418,17 @@ function updateContact() {
     emergency: emergencyCheck.checked
   };
 
-  contact.color = contacts[updatedIndex].color;   // keep the same avatar color
-  contacts[updatedIndex] = contact;   // overwrite the old one
+  contact.color = contacts[updatedIndex].color;  
+  contacts[updatedIndex] = contact;   
   saveContacts();
   displayContacts();
 }
+
+function matchesSearch(contact, term) {
+  if (term === "") return true;  
+  return contact.Name.toLowerCase().includes(term) ||
+         contact.phonenum.includes(term) ||
+         (contact.email || "").toLowerCase().includes(term);
+}
+
+searchInput.addEventListener("input", displayContacts);
