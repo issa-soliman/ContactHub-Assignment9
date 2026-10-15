@@ -616,6 +616,9 @@ padding: 12px 16px;
   &.orange-bg{
 background-image: linear-gradient(to right bottom, oklch(0.769 0.188 70.08) 0%, oklch(0.646 0.222 41.116) 100%);
   }
+  &.blue-bg{
+  background-image: linear-gradient(to right bottom, oklch(0.715 0.143 215.221) 0%, oklch(0.546 0.245 262.881) 100%);
+}
 .favorites-p-a,.emergency-p-a{
 width: 20px;
 height: 20px;
