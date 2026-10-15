@@ -31,6 +31,7 @@ function closeModal() {
   modal.classList.remove("show");
   contactForm.reset();
   resetAvatar();
+  clearValidation();
   updatedIndex = undefined;
   modalTitle.textContent = "Add New Contact";
   submitText.textContent = "Save Contact";
@@ -87,7 +88,40 @@ function showAvatar(src) {
 function resetAvatar() {
   avatarPreview.innerHTML = avatarIcon;
   avatarData = "";
-  avatarInput.value = "";   
+  avatarInput.value = "";   // so choosing the same photo again still works
+}
+
+// ===== Validation (regex) =====
+var nameRegex  = /^[A-Za-z\u0600-\u06FF\s]{2,50}$/;
+var phoneRegex = /^01[0125]\d{8}$/;
+var emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9-]+(\.[a-zA-Z0-9-]+)*\.[a-zA-Z]{2,}$/;
+
+// checks one input and shows/hides the message under it
+// empty = valid (the "Missing" alerts handle empty name/phone)
+function validate(input, regex) {
+  var value = input.value.trim();
+  var message = input.nextElementSibling;   // the <p class="not-valid-text"> under the input
+  var isValid = value === "" || regex.test(value);
+
+  if (isValid) {
+    message.classList.replace("d-block", "d-none");
+    input.classList.remove("not-valid");
+  } else {
+    message.classList.replace("d-none", "d-block");
+    input.classList.add("not-valid");
+  }
+  return isValid;
+}
+
+fullName.addEventListener("input", function () { validate(fullName, nameRegex); });
+phone.addEventListener("input", function () { validate(phone, phoneRegex); });
+email.addEventListener("input", function () { validate(email, emailRegex); });
+
+function clearValidation() {
+  [fullName, phone, email].forEach(function (input) {
+    input.classList.remove("not-valid");
+    input.nextElementSibling.classList.replace("d-block", "d-none");
+  });
 }
 
 // ===== Build one card =====
@@ -226,6 +260,19 @@ contactForm.addEventListener("submit", function (e) {
       icon: "error",
       title: "Duplicate Phone Number",
       text: "A contact with this phone number already exists: " + duplicate.Name
+    });
+    return;
+  }
+
+  // wrong format: stop and show an alert
+  var nameOk = validate(fullName, nameRegex);
+  var phoneOk = validate(phone, phoneRegex);
+  var emailOk = validate(email, emailRegex);
+  if (!nameOk || !phoneOk || !emailOk) {
+    Swal.fire({
+      icon: "error",
+      title: "Invalid Data",
+      text: "Please fix the fields marked in red."
     });
     return;
   }
